@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지구는 서→동으로 돌고, 해는 동→서로 가요</title>
+<style>
+  :root{
+    --bg:#0a0e22; --ink:#f3efe4; --sub:#aab2d0; --gold:#ffc94d; --line:#26305a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif}
+  main{max-width:1180px;margin:0 auto;padding:20px 14px 28px}
+  h1{font-size:clamp(20px,3.4vw,30px);margin:0 0 6px;font-weight:800;line-height:1.3}
+  p.lead{margin:0 0 16px;color:var(--sub);font-size:clamp(14px,2vw,17px);line-height:1.6}
+  .stage{display:flex;flex-wrap:wrap;gap:12px}
+  .panel{flex:1 1 340px;min-width:0}
+  .panel h2{font-size:15px;margin:0 0 6px;color:var(--gold);font-weight:700}
+  canvas{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--line)}
+  .bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
+  button{background:var(--gold);color:#241a00;border:0;border-radius:999px;padding:10px 18px;
+    font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+  button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+  button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .prog{flex:1 1 160px;height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+  .prog i{display:block;height:100%;width:0;background:var(--gold)}
+
+  .ctl{position:sticky;bottom:0;margin-top:16px;padding:14px 14px 12px;border-radius:18px;
+    background:#121838;border:1px solid var(--line);box-shadow:0 -8px 24px rgba(0,0,0,.35)}
+  .ctl .row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .ctl .ico{font-size:30px;line-height:1;flex:0 0 auto}
+  .ctl .sl{flex:1 1 auto;min-width:0}
+  .ctl label{display:block;font-size:15px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+  .ctl output{display:block;margin-top:4px;font-size:14px;color:var(--gold);font-weight:700}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:16px;border-radius:99px;
+    background:var(--line);outline:none;margin:6px 0;touch-action:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:44px;height:44px;border-radius:50%;
+    background:var(--gold);border:4px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:grab}
+  input[type=range]::-moz-range-thumb{width:36px;height:36px;border-radius:50%;background:var(--gold);border:4px solid #fff;cursor:grab}
+  input[type=range]:focus-visible{outline:3px solid #fff;outline-offset:4px}
+  .ctl .btns{display:flex;gap:10px;flex-wrap:wrap}
+
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+  .tab{background:transparent;color:var(--ink);border:1px solid var(--line);font-size:15px}
+  .tab.on{background:var(--gold);color:#241a00;border-color:var(--gold)}
+  .dirbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px}
+  .dirbar[hidden]{display:none}
+  .dirlabel{font-weight:700;color:var(--gold);margin-right:4px}
+  .dirbar button{background:transparent;color:var(--ink);border:2px solid var(--line);font-size:17px;padding:10px 16px}
+  .dirbar button.on{background:#ffffff;color:#10163a;border-color:#fff}
+  #note2 b{color:var(--ink)}
+  .note{margin-top:14px;padding:12px 14px;border-radius:12px;background:#121838;
+    color:var(--sub);font-size:14px;line-height:1.6}
+  .note b{color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+  <h1 id="h1">지구는 서→동으로 돌고, 해는 동→서로 가요</h1>
+  <p class="lead" id="lead">지구가 한 바퀴 돌면 하루예요. 왼쪽은 우주에서 본 모습, 오른쪽은 지구 위 “나”가 본 하늘이에요. 아래 패널로 속도를 천천히 바꿔 보세요.</p>
+
+  <div class="tabs" role="group" aria-label="실험 선택">
+    <button id="tab1" class="tab on" aria-pressed="true">실험 1 · 해는 왜 동→서로 갈까?</button>
+    <button id="tab2" class="tab" aria-pressed="false">실험 2 · 어느 쪽을 보면 어떻게 보일까?</button>
+  </div>
+  <div class="dirbar" id="dirBar" hidden>
+    <span class="dirlabel">내가 바라보는 방향</span>
+    <button data-az="0">⬆ 북쪽</button><button data-az="90">➡ 동쪽</button>
+    <button data-az="180" class="on">⬇ 남쪽</button><button data-az="270">⬅ 서쪽</button>
+  </div>
+
+  <div class="stage">
+    <div class="panel">
+      <h2>우주에서 본 모습 (북극 위에서 내려다봄)</h2>
+      <canvas id="space" width="600" height="600" aria-label="북극 위에서 본 지구 자전"></canvas>
+    </div>
+    <div class="panel">
+      <h2 id="skyTitle">지구 위 “나”가 본 하늘 (남쪽을 바라봄)</h2>
+      <canvas id="sky" width="600" height="600" aria-label="지구 위에서 본 태양의 움직임"></canvas>
+    </div>
+  </div>
+
+  <div class="note" id="note1">
+    <b>핵심:</b> 지구가 <b>서→동</b>(북극 위에서 보면 반시계 방향)으로 돌기 때문에, 지구 위에 서 있는 우리에게는 해가 반대로 <b>동→서</b>로 움직이는 것처럼 보여요. 하루 동안 해가 하늘을 가로지르는 것처럼 보이는 주된 이유는 지구의 자전이에요. 기차 안에서 창밖 풍경이 거꾸로 지나가는 것과 같아요.
+  </div>
+
+  <div class="note" id="note2" hidden>
+    <b id="n2head"></b>
+    <span id="n2body"></span>
+    <br><br>
+    <b>왜 남쪽일까?</b> 우리나라는 지구의 <b>북반구</b>에 있어요. 춘분·추분에는 해가 정동쪽에서 떠서, 하늘로 올라가면서 <b>남쪽으로 기울어진 길</b>을 지나요. 태양이 가장 높이 뜨는 남중 시각에는 정남쪽에 있어요. 그래서 남쪽을 보면 해가 뜨고 지는 길 전체를 한눈에 볼 수 있어요. <b>남반구 중위도</b>(호주 남부 등)에서는 반대로 북쪽 하늘을 지나요.
+    <br><br>
+    <b>북쪽 하늘은?</b> 해는 없지만 밤에는 <b>북극성</b>이 거의 같은 자리에 있고, 다른 별들이 그 둘레를 반시계 방향으로 돌아요. 지구 자전축이 북극성 쪽을 향하고 있기 때문이에요.
+    <br><br>
+    <span style="color:var(--sub)">북위 37.5°, 춘분·추분 기준의 단순화한 모형이에요. 화면의 12시는 태양이 가장 높은 때를 뜻하는 태양시로, 실제 한국 표준시와는 달라요. 한국에서는 여름에 북동쪽에서 떠서 북서쪽으로 지고, 겨울에는 남동쪽에서 떠서 남서쪽으로 져요. 왼쪽 부채꼴은 방향 안내용으로, 북쪽은 북극 쪽, 남쪽은 바깥쪽이에요.</span>
+  </div>
+
+  <section class="ctl" aria-label="속도 조절 패널">
+    <div class="row">
+      <span class="ico" aria-hidden="true">🐢</span>
+      <div class="sl">
+        <label for="speed">지구가 도는 속도</label>
+        <input type="range" id="speed" min="5" max="200" value="40">
+        <output id="spdOut" for="speed"></output>
+      </div>
+      <span class="ico" aria-hidden="true">🐇</span>
+    </div>
+    <div class="row">
+      <span class="ico" aria-hidden="true">🌙</span>
+      <div class="sl">
+        <label for="scrub">손가락으로 하루 돌려 보기 (밤 → 아침 → 낮 → 저녁 → 밤)</label>
+        <input type="range" id="scrub" min="0" max="1000" value="0">
+      </div>
+      <span class="ico" aria-hidden="true">☀️</span>
+    </div>
+    <div class="btns">
+      <button id="play">⏸ 멈춤</button>
+      <button id="restart" class="ghost">↺ 처음부터</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  var DURATION = 8000;               // 하루 = 8초 (루프)
+  var space = document.getElementById('space'), sctx = space.getContext('2d');
+  var sky = document.getElementById('sky'),     kctx = sky.getContext('2d');
+  var playBtn = document.getElementById('play'), restartBtn = document.getElementById('restart');
+  var speedEl = document.getElementById('speed'), spdOut = document.getElementById('spdOut'), scrub = document.getElementById('scrub');
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var playing = true, elapsed = 0, last = null, speed = 0.4;
+  var mode = 1, facing = 180, LAT = 37.5;
+
+  // 별(고정)
+  var stars = [], i;
+  var seed = 7; function rnd(){ seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  for(i=0;i<70;i++){ stars.push({x:rnd(),y:rnd()*0.68,r:0.6+rnd()*1.4}); }
+
+  // 대륙(고정, 지구에 붙어 있음): [각도(도), 반지름비율, 크기]
+  var land = [[20,.62,22],[48,.74,18],[75,.55,26],[110,.7,20],[140,.5,24],[170,.76,16],
+              [200,.6,22],[235,.72,20],[262,.5,26],[300,.68,18],[330,.78,16],[350,.52,20],[90,.3,16],[220,.28,14]];
+
+  function rad(d){ return d*Math.PI/180; }
+
+  function arrow(c,x1,y1,x2,y2,color,w){
+    c.strokeStyle=color; c.fillStyle=color; c.lineWidth=w||3; c.lineCap='round';
+    c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+    var a=Math.atan2(y2-y1,x2-x1), h=10+(w||3);
+    c.beginPath(); c.moveTo(x2,y2);
+    c.lineTo(x2-h*Math.cos(a-0.45),y2-h*Math.sin(a-0.45));
+    c.lineTo(x2-h*Math.cos(a+0.45),y2-h*Math.sin(a+0.45)); c.closePath(); c.fill();
+  }
+
+  function label(c,t,x,y,size,color,align){
+    c.font='700 '+size+'px "Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif';
+    c.fillStyle=color; c.textAlign=align||'center'; c.textBaseline='middle'; c.fillText(t,x,y);
+  }
+
+  /* ---------- 우주 화면 ---------- */
+  function drawSpace(phi){            // phi: 태양 방향 기준 "나"의 각도(도, 반시계 +)
+    var c=sctx, W=600, cx=250, cy=310, R=130;
+    c.clearRect(0,0,W,W);
+    c.fillStyle='#070a1c'; c.fillRect(0,0,W,W);
+    for(var s=0;s<stars.length;s++){ c.fillStyle='rgba(255,255,255,.55)';
+      c.beginPath(); c.arc(stars[s].x*W, stars[s].y*W/0.68*0.9, stars[s].r*0.8,0,6.3); c.fill(); }
+
+    // 태양
+    var g=c.createRadialGradient(640,cy,10,640,cy,230);
+    g.addColorStop(0,'rgba(255,214,90,1)'); g.addColorStop(.35,'rgba(255,170,40,.65)'); g.addColorStop(1,'rgba(255,140,0,0)');
+    c.fillStyle=g; c.beginPath(); c.arc(640,cy,230,0,6.3); c.fill();
+    c.fillStyle='#ffd45a'; c.beginPath(); c.arc(640,cy,92,0,6.3); c.fill();
+    label(c,'태양',545,cy-118,18,'#ffd45a');
+
+    // 햇빛 화살표
+    for(var k=-2;k<=2;k++){
+      var yy=cy+k*52;
+      arrow(c,520,yy,395,yy,'rgba(255,214,90,.75)',2.5);
+    }
+
+    // 지구 본체
+    c.save();
+    c.beginPath(); c.arc(cx,cy,R,0,6.3); c.clip();
+    var eg=c.createRadialGradient(cx+40,cy-30,10,cx,cy,R);
+    eg.addColorStop(0,'#4aa3ff'); eg.addColorStop(1,'#1c5fb8');
+    c.fillStyle=eg; c.fillRect(cx-R,cy-R,2*R,2*R);
+    // 대륙 (지구와 함께 회전)
+    for(var n=0;n<land.length;n++){
+      var a=rad(land[n][0]+phi), r=land[n][1]*R;
+      c.fillStyle='#4fae5d';
+      c.beginPath(); c.ellipse(cx+r*Math.cos(a), cy-r*Math.sin(a), land[n][2], land[n][2]*0.7, -a, 0, 6.3); c.fill();
+    }
+    // 밤(태양 반대쪽)
+    c.fillStyle='rgba(2,4,22,.68)';
+    c.fillRect(cx-R-2,cy-R-2,R+2,2*R+4);
+    c.restore();
+    c.strokeStyle='rgba(255,255,255,.35)'; c.lineWidth=2;
+    c.beginPath(); c.arc(cx,cy,R,0,6.3); c.stroke();
+
+    // 북극점
+    c.fillStyle='#fff'; c.beginPath(); c.arc(cx,cy,4,0,6.3); c.fill();
+    label(c,'북극',cx,cy+16,12,'#e9ecff');
+
+    label(c,'낮',cx+R*0.55,cy+R+30,17,'#ffd45a');
+    label(c,'밤',cx-R*0.55,cy+R+30,17,'#8d98cf');
+
+    // 자전 방향 화살표 (반시계)
+    c.strokeStyle='#ffc94d'; c.lineWidth=4; c.lineCap='round';
+    c.beginPath(); c.arc(cx,cy,R+26,rad(-205),rad(-150),false); // 임시: 아래에서 따로 그림
+    c.beginPath();
+    c.arc(cx,cy,R+26,-rad(110),-rad(190),true);               // 위쪽에서 왼쪽으로 (반시계)
+    c.stroke();
+    var ea=-rad(190), ex=cx+(R+26)*Math.cos(ea), ey=cy+(R+26)*Math.sin(ea);
+    var tx=Math.sin(ea)*1, ty=-Math.cos(ea)*1;                // 반시계 접선(화면좌표)
+    // 반시계(화면에서 보이는 방향) 접선: 각도 감소 방향
+    tx=Math.sin(ea); ty=-Math.cos(ea);
+    arrow(c,ex-tx*2,ey-ty*2,ex+tx*14,ey+ty*14,'#ffc94d',4);
+    label(c,'지구 자전: 서 → 동',cx-8,cy-R-52,16,'#ffc94d');
+    label(c,'(북극 위에서 보면 반시계 방향)',cx-8,cy-R-32,12,'#c9b377');
+
+    // "나"
+    var pa=rad(phi), pr=(mode===2? R*Math.cos(rad(LAT)) : R);
+    var px=cx+pr*Math.cos(pa), py=cy-pr*Math.sin(pa);
+    if(mode===2){
+      var dirs={0:[-Math.cos(pa),Math.sin(pa)],90:[-Math.sin(pa),-Math.cos(pa)],180:[Math.cos(pa),-Math.sin(pa)],270:[Math.sin(pa),Math.cos(pa)]};
+      var dv=dirs[facing], base=Math.atan2(dv[1],dv[0]), L=100, half=Math.PI/2;
+      c.fillStyle='rgba(255,255,255,.22)'; c.strokeStyle='rgba(255,255,255,.7)'; c.lineWidth=2;
+      c.beginPath(); c.moveTo(px,py);
+      c.lineTo(px+L*Math.cos(base-half),py+L*Math.sin(base-half));
+      c.arc(px,py,L,base-half,base+half,false);
+      c.closePath(); c.fill(); c.stroke();
+      var names={0:'북쪽',90:'동쪽',180:'남쪽',270:'서쪽'};
+      label(c,names[facing]+' 보는 중',px+dv[0]*(L+34),py+dv[1]*(L+34),16,'#ffffff');
+    }
+    // 동쪽 = 반시계 접선 방향 (화면좌표)
+    var ex2=-Math.sin(pa), ey2=-Math.cos(pa);
+    arrow(c,px,py,px+ex2*48,py+ey2*48,'#ff7a7a',3.5);
+    label(c,'동',px+ex2*64,py+ey2*64,17,'#ff9a9a');
+    var wx=-ex2, wy=-ey2;
+    arrow(c,px,py,px+wx*36,py+wy*36,'#8fd0ff',2.5);
+    label(c,'서',px+wx*52,py+wy*52,15,'#8fd0ff');
+    c.fillStyle='#fff'; c.strokeStyle='#000'; c.lineWidth=2;
+    c.beginPath(); c.arc(px,py,8,0,6.3); c.fill(); c.stroke();
+    label(c,'나',px-Math.cos(pa)*0+ (Math.cos(pa)>=0?-1:1)*0, py-0, 1, 'rgba(0,0,0,0)');
+    // "나" 이름표는 바깥쪽에
+    label(c,'나',px+Math.cos(pa)*22,py-Math.sin(pa)*22,15,'#ffffff');
+  }
+
+  /* ---------- 하늘 화면 ---------- */
+  function lerp(a,b,t){ return a+(b-a)*t; }
+  function mixColor(c1,c2,t){
+    return 'rgb('+Math.round(lerp(c1[0],c2[0],t))+','+Math.round(lerp(c1[1],c2[1],t))+','+Math.round(lerp(c1[2],c2[2],t))+')';
+  }
+
+  function drawSky(phi){
+    var c=kctx, W=600, H=600, hy=440;
+    var alt=Math.cos(rad(phi));              // 태양 고도 (-1~1)
+    var d=Math.max(0,Math.min(1,(alt+0.15)/0.5)); // 낮 정도 0~1
+    // 하늘색
+    var top=mixColor([6,10,32],[70,150,235],d), bot=mixColor([14,18,48],[170,215,250],d);
+    // 일출/일몰 노을
+    var twi=Math.max(0,1-Math.abs(alt)/0.28);
+    var gr=c.createLinearGradient(0,0,0,hy);
+    gr.addColorStop(0,top); gr.addColorStop(1,bot);
+    c.fillStyle=gr; c.fillRect(0,0,W,hy);
+    if(twi>0){
+      var tg=c.createLinearGradient(0,hy-170,0,hy);
+      tg.addColorStop(0,'rgba(255,120,60,0)'); tg.addColorStop(1,'rgba(255,140,70,'+(0.55*twi)+')');
+      c.fillStyle=tg; c.fillRect(0,hy-170,W,170);
+    }
+    // 별
+    var sa=Math.max(0,1-d*1.6);
+    if(sa>0){ for(var s=0;s<stars.length;s++){
+      c.fillStyle='rgba(255,255,255,'+(0.85*sa)+')';
+      c.beginPath(); c.arc(stars[s].x*W, stars[s].y*hy/0.68*0.95, stars[s].r,0,6.3); c.fill(); } }
+
+    // 해의 길(점선 아치)
+    c.setLineDash([4,8]); c.strokeStyle='rgba(255,255,255,.35)'; c.lineWidth=2;
+    c.beginPath();
+    for(var a=-90;a<=90;a+=3){
+      var x=300+250*Math.sin(rad(a)), y=hy-310*Math.cos(rad(a));
+      if(a===-90) c.moveTo(x,y); else c.lineTo(x,y);
+    }
+    c.stroke(); c.setLineDash([]);
+
+    // 해
+    if(alt>-0.12){
+      var sx=300+250*Math.sin(rad(phi)), sy=hy-310*alt;
+      var sg=c.createRadialGradient(sx,sy,6,sx,sy,70);
+      sg.addColorStop(0,'rgba(255,230,120,.95)'); sg.addColorStop(1,'rgba(255,200,60,0)');
+      c.fillStyle=sg; c.beginPath(); c.arc(sx,sy,70,0,6.3); c.fill();
+      c.fillStyle='#ffd84a'; c.beginPath(); c.arc(sx,sy,26,0,6.3); c.fill();
+    }
+
+    // 땅
+    var gg=c.createLinearGradient(0,hy,0,H);
+    gg.addColorStop(0,mixColor([8,16,24],[70,150,80],d)); gg.addColorStop(1,mixColor([4,8,14],[40,100,55],d));
+    c.fillStyle=gg; c.fillRect(0,hy,W,H-hy);
+    c.strokeStyle='rgba(255,255,255,.45)'; c.lineWidth=2;
+    c.beginPath(); c.moveTo(0,hy); c.lineTo(W,hy); c.stroke();
+
+    // 방위 표시
+    label(c,'동쪽',44,hy+34,22,'#ff9a9a');
+    label(c,'남쪽',300,hy+34,20,'#e9ecff');
+    label(c,'서쪽',556,hy+34,22,'#8fd0ff');
+
+    // 해 이동 방향 안내
+    if(alt>0.05){
+      arrow(c,200,70,400,70,'rgba(255,255,255,.9)',4);
+      label(c,'해는 동 → 서로 가요',300,38,20,'#ffffff');
+    } else {
+      label(c,alt>-0.12?'해가 지평선 근처예요':'밤: 해는 지구 반대편에 있어요',300,38,18,'rgba(255,255,255,.9)');
+    }
+
+    // 시각
+    var hour=(12+phi/15+24)%24, hh=Math.floor(hour), mm=Math.floor((hour-hh)*60);
+    var ap=hh<12?'오전':'오후', h12=hh%12===0?12:hh%12;
+    label(c,ap+' '+h12+':'+(mm<10?'0':'')+mm,300,hy+84,26,'#ffffff');
+  }
+
+
+  /* ---------- 실험 2: 바라보는 방향에 따른 하늘 ---------- */
+  var starsB=[]; (function(){
+    var sd=21; function r(){ sd=(sd*16807)%2147483647; return sd/2147483647; }
+    for(var q=0;q<150;q++){ starsB.push({dec:Math.asin(r()*1.5-0.5)*180/Math.PI, off:r()*360, m:0.6+r()*1.5}); }
+  })();
+  function skyPos(dec,H){
+    var d=rad(dec),h=rad(H),l=rad(LAT);
+    var alt=Math.asin(Math.sin(d)*Math.sin(l)+Math.cos(d)*Math.cos(l)*Math.cos(h));
+    var az=Math.atan2(-Math.cos(d)*Math.sin(h), Math.sin(d)*Math.cos(l)-Math.cos(d)*Math.sin(l)*Math.cos(h));
+    return {alt:alt*180/Math.PI, az:(az*180/Math.PI+360)%360};
+  }
+  function proj(p,hy){
+    var dA=((p.az-facing+540)%360)-180;
+    return {x:300+dA*3.05, y:hy-p.alt*4.6, dA:dA};
+  }
+  function drawSky2(phi){
+    var c=kctx, W=600, H=600, hy=440;
+    var sun=skyPos(0,phi), alt=Math.sin(rad(sun.alt));
+    var d=Math.max(0,Math.min(1,(alt+0.15)/0.5));
+    var gr=c.createLinearGradient(0,0,0,hy);
+    gr.addColorStop(0,mixColor([6,10,32],[70,150,235],d)); gr.addColorStop(1,mixColor([14,18,48],[170,215,250],d));
+    c.fillStyle=gr; c.fillRect(0,0,W,hy);
+    var twi=Math.max(0,1-Math.abs(alt)/0.28);
+    if(twi>0){ var tg=c.createLinearGradient(0,hy-170,0,hy);
+      tg.addColorStop(0,'rgba(255,120,60,0)'); tg.addColorStop(1,'rgba(255,140,70,'+(0.5*twi)+')');
+      c.fillStyle=tg; c.fillRect(0,hy-170,W,170); }
+    // 별 (밤)
+    var sa=Math.max(0,1-d*1.6);
+    if(sa>0){
+      for(var s2=0;s2<starsB.length;s2++){
+        var p=skyPos(starsB[s2].dec,phi+starsB[s2].off);
+        if(p.alt<1) continue; var q=proj(p,hy); if(Math.abs(q.dA)>90) continue;
+        c.fillStyle='rgba(255,255,255,'+(0.85*sa)+')'; c.beginPath(); c.arc(q.x,q.y,starsB[s2].m,0,6.3); c.fill();
+      }
+      var po=proj(skyPos(90,0),hy);
+      if(Math.abs(po.dA)<=90){
+        c.fillStyle='rgba(255,214,90,'+sa+')'; c.beginPath(); c.arc(po.x,po.y,5,0,6.3); c.fill();
+        c.globalAlpha=sa; label(c,'북극성',po.x,po.y-18,16,'#ffd45a'); c.globalAlpha=1;
+      }
+    }
+    // 해가 지나가는 길 (점선)
+    c.setLineDash([4,8]); c.strokeStyle='rgba(255,255,255,.4)'; c.lineWidth=2; c.beginPath();
+    var started=false;
+    for(var h=-90;h<=90;h+=2){
+      var sp=skyPos(0,h), q2=proj(sp,hy);
+      if(Math.abs(q2.dA)>90){ started=false; continue; }
+      if(!started){ c.moveTo(q2.x,q2.y); started=true; } else c.lineTo(q2.x,q2.y);
+    }
+    c.stroke(); c.setLineDash([]);
+    // 해
+    var sq=proj(sun,hy), inView=sun.alt>-6 && Math.abs(sq.dA)<=90;
+    if(inView){
+      var sg=c.createRadialGradient(sq.x,sq.y,6,sq.x,sq.y,70);
+      sg.addColorStop(0,'rgba(255,230,120,.95)'); sg.addColorStop(1,'rgba(255,200,60,0)');
+      c.fillStyle=sg; c.beginPath(); c.arc(sq.x,sq.y,70,0,6.3); c.fill();
+      c.fillStyle='#ffd84a'; c.beginPath(); c.arc(sq.x,sq.y,26,0,6.3); c.fill();
+    }
+    // 땅
+    var gg=c.createLinearGradient(0,hy,0,H);
+    gg.addColorStop(0,mixColor([8,16,24],[70,150,80],d)); gg.addColorStop(1,mixColor([4,8,14],[40,100,55],d));
+    c.fillStyle=gg; c.fillRect(0,hy,W,H-hy);
+    c.strokeStyle='rgba(255,255,255,.45)'; c.lineWidth=2; c.beginPath(); c.moveTo(0,hy); c.lineTo(W,hy); c.stroke();
+    // 방위 표시 (보이는 범위 안)
+    var cp=[[0,'북쪽','#e9ecff'],[90,'동쪽','#ff9a9a'],[180,'남쪽','#e9ecff'],[270,'서쪽','#8fd0ff']];
+    for(var k=0;k<4;k++){
+      var dd=((cp[k][0]-facing+540)%360)-180;
+      if(Math.abs(dd)<=90){ var x=300+dd*3.05; c.fillStyle='rgba(255,255,255,.6)'; c.fillRect(x-1,hy,2,10);
+        label(c,cp[k][1],x,hy+34,22,cp[k][2]); }
+    }
+    // 안내 문구
+    var msg;
+    if(sun.alt>-0.001){
+      if(inView) msg='해가 보여요!';
+      else { var side=Math.abs(sq.dA)>130?'뒤쪽':(sq.dA>0?'오른쪽':'왼쪽'); msg='해는 지금 '+side+'에 있어요 (시선 밖)'; }
+    } else msg='밤이에요. 해는 지평선 아래에 있어요';
+    label(c,msg,300,40,20,'#ffffff');
+    if(sun.alt>0 && !inView){
+      var rightSide=sq.dA>0 && Math.abs(sq.dA)<=130;
+      var back=Math.abs(sq.dA)>130;
+      if(back) label(c,'⤵ 뒤돌아보면 있어요',300,hy-40,18,'#ffd45a');
+      else if(rightSide) arrow(c,520,hy-120,575,hy-120,'#ffd45a',5);
+      else arrow(c,80,hy-120,25,hy-120,'#ffd45a',5);
+    }
+    // 시각
+    var hour=(12+phi/15+24)%24, hh=Math.floor(hour), mm=Math.floor((hour-hh)*60);
+    var ap=hh<12?'오전':'오후', h12=hh%12===0?12:hh%12;
+    label(c,ap+' '+h12+':'+(mm<10?'0':'')+mm,300,hy+84,26,'#ffffff');
+  }
+
+  var n2head=document.getElementById('n2head'), n2body=document.getElementById('n2body');
+  var FTXT={
+    180:['남쪽을 볼 때:','왼쪽(동쪽)에서 해가 떠서, 정면(남쪽)에서 가장 높이 올라갔다가, 오른쪽(서쪽)으로 져요. 해의 길 전체가 한눈에 보여요.'],
+    0:['북쪽을 볼 때:','낮에는 해가 하나도 안 보여요. 해는 남쪽·뒤쪽에 있기 때문이에요. 밤에는 별들이 북극성을 가운데 두고 반시계 방향으로 돌아요.'],
+    90:['동쪽을 볼 때:','해가 정면에서 떠올라서, 점점 오른쪽(남쪽)으로 올라가요. 해가 뜨는 곳이 바로 동쪽이에요.'],
+    270:['서쪽을 볼 때:','해가 왼쪽(남쪽)에서 내려와서, 정면(서쪽)으로 져요. 해가 지는 곳이 바로 서쪽이에요.']
+  };
+  function setFacing(az){
+    facing=az;
+    var bs=document.querySelectorAll('#dirBar button');
+    for(var b=0;b<bs.length;b++){ var selected=+bs[b].getAttribute('data-az')===az; bs[b].classList.toggle('on',selected); bs[b].setAttribute('aria-pressed',selected); }
+    n2head.textContent=FTXT[az][0]+' '; n2body.textContent=FTXT[az][1];
+    document.getElementById('skyTitle').textContent='지구 위 “나”가 본 하늘 ('+{0:'북쪽',90:'동쪽',180:'남쪽',270:'서쪽'}[az]+'을 바라봄)';
+  }
+  function setMode(m){
+    mode=m;
+    document.getElementById("tab1").setAttribute("aria-pressed",m===1);
+    document.getElementById("tab2").setAttribute("aria-pressed",m===2);
+    document.getElementById('tab1').classList.toggle('on',m===1);
+    document.getElementById('tab2').classList.toggle('on',m===2);
+    document.getElementById('dirBar').hidden=(m!==2);
+    document.getElementById('note1').hidden=(m!==1);
+    document.getElementById('note2').hidden=(m!==2);
+    if(m===1){
+      document.getElementById('skyTitle').textContent='지구 위 “나”가 본 하늘 (남쪽을 바라봄)';
+      document.getElementById('h1').textContent='지구는 서→동으로 돌고, 해는 동→서로 가요';
+      document.getElementById('lead').textContent='지구가 한 바퀴 돌면 하루예요. 왼쪽은 우주에서 본 모습, 오른쪽은 지구 위 “나”가 본 하늘이에요. 아래 패널로 속도를 천천히 바꿔 보세요.';
+    } else {
+      document.getElementById('h1').textContent='어느 쪽 하늘을 보느냐에 따라 달라 보여요';
+      document.getElementById('lead').textContent='위쪽 버튼으로 바라보는 방향을 바꿔 보세요. 왼쪽 그림의 흰 부채꼴이 내가 보는 쪽이에요. (한국처럼 북반구 위도 37.5° 기준)';
+      setFacing(facing);
+    }
+  }
+  document.getElementById('tab1').addEventListener('click',function(){ setMode(1); });
+  document.getElementById('tab2').addEventListener('click',function(){ setMode(2); });
+  var dbs=document.querySelectorAll('#dirBar button');
+  for(var db=0;db<dbs.length;db++) dbs[db].addEventListener('click',function(){ setFacing(+this.getAttribute('data-az')); });
+
+  setFacing(facing);
+  /* ---------- 루프 ---------- */
+  function render(){
+    var t=elapsed/DURATION;           // 0~1
+    var phi=-180+360*t;               // 자정에서 시작
+    drawSpace(phi); if(mode===2) drawSky2(phi); else drawSky(phi);
+    scrub.value=Math.round(t*1000);
+  }
+
+  function tick(ts){
+    if(last===null) last=ts;
+    var dt=Math.min(ts-last,100); last=ts;
+    if(playing){ elapsed=(elapsed+dt*speed)%DURATION; }
+    render();
+    requestAnimationFrame(tick);
+  }
+
+  function updSpeed(){
+    speed = speedEl.value/100;
+    var sec = DURATION/1000/speed;
+    spdOut.textContent = '하루가 지나가는 데 약 '+(sec<10?sec.toFixed(1):Math.round(sec))+'초 걸려요 (×'+speed.toFixed(2)+')';
+  }
+  speedEl.addEventListener('input',updSpeed); updSpeed();
+  scrub.addEventListener('input',function(){
+    playing=false; playBtn.textContent='▶ 재생';
+    elapsed = scrub.value/1000*DURATION;
+  });
+
+  playBtn.addEventListener('click',function(){
+    playing=!playing; playBtn.textContent=playing?'⏸ 멈춤':'▶ 재생';
+  });
+  restartBtn.addEventListener('click',function(){
+    elapsed=0; playing=true; playBtn.textContent='⏸ 멈춤';
+  });
+
+  if(reduce){ playing=false; playBtn.textContent='▶ 재생'; elapsed=DURATION*0.35; }
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
