@@ -57,6 +57,7 @@
 <style>
 main{max-width:1800px;padding:16px 16px 24px;display:grid;grid-template-columns:minmax(0,1fr) clamp(208px,18vw,256px);column-gap:16px;align-items:start}
 main>h1,main>.lead,main>.tabs,main>.dirbar,main>.note{grid-column:1/-1}
+main>.note{grid-row:6}
 main>h1{grid-row:1}main>.lead{grid-row:2}main>.tabs{grid-row:3}main>.dirbar{grid-row:4}
 main>.stage{grid-column:1;grid-row:5;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-width:0}
 main>.ctl{grid-column:2;grid-row:5;position:static;margin:0;padding:16px 14px;border-radius:16px;box-shadow:none;min-width:0}
@@ -73,7 +74,7 @@ input[type=range]::-moz-range-thumb{width:26px;height:26px;border-width:3px}
 .ctl .btns{gap:8px;display:grid;grid-template-columns:1fr}
 .ctl button{min-height:44px;padding:8px 10px;font-size:14px}
 @media(max-width:900px){main{padding:12px 10px 20px;grid-template-columns:minmax(0,1fr) 200px;column-gap:10px}main>.stage{gap:8px}.panel h2{font-size:13px}main>.ctl{padding:12px}h1{font-size:22px}p.lead{font-size:14px;margin-bottom:10px}}
-@media(max-width:599px){main{grid-template-columns:1fr}main>.stage{grid-template-columns:1fr}main>.ctl{grid-column:1;grid-row:6;margin-top:12px}canvas{max-width:100%}.panel h2{min-height:0}.ctl .btns{grid-template-columns:1fr 1fr}}
+@media(max-width:599px){main>.note{grid-row:7}main{grid-template-columns:1fr}main>.stage{grid-template-columns:1fr}main>.ctl{grid-column:1;grid-row:6;margin-top:12px}canvas{max-width:100%}.panel h2{min-height:0}.ctl .btns{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
