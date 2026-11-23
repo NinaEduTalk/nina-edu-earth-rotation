@@ -54,11 +54,32 @@
     color:var(--sub);font-size:14px;line-height:1.6}
   .note b{color:var(--ink)}
 </style>
+<style>
+main{max-width:1800px;padding:16px 16px 24px;display:grid;grid-template-columns:minmax(0,1fr) clamp(208px,18vw,256px);column-gap:16px;align-items:start}
+main>h1,main>.lead,main>.tabs,main>.dirbar,main>.note{grid-column:1/-1}
+main>h1{grid-row:1}main>.lead{grid-row:2}main>.tabs{grid-row:3}main>.dirbar{grid-row:4}
+main>.stage{grid-column:1;grid-row:5;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-width:0}
+main>.ctl{grid-column:2;grid-row:5;position:static;margin:0;padding:16px 14px;border-radius:16px;box-shadow:none;min-width:0}
+.panel h2{min-height:36px;line-height:1.35;margin-bottom:6px}
+canvas{max-width:calc(100vh - 232px);max-width:calc(100dvh - 232px);margin-inline:auto;aspect-ratio:1}
+.ctl .row{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:18px}
+.ctl .sl{grid-column:1/-1;grid-row:1;min-width:0}
+.ctl .ico{font-size:22px}.ctl .ico:last-child{text-align:right}
+.ctl label{font-size:15px;line-height:1.5;margin-bottom:4px}
+.ctl output{font-size:13px;line-height:1.5;margin-top:0}
+input[type=range]{height:44px;margin:0;background:linear-gradient(var(--line),var(--line)) center/100% 10px no-repeat}
+input[type=range]::-webkit-slider-thumb{width:32px;height:32px;border-width:3px}
+input[type=range]::-moz-range-thumb{width:26px;height:26px;border-width:3px}
+.ctl .btns{gap:8px;display:grid;grid-template-columns:1fr}
+.ctl button{min-height:44px;padding:8px 10px;font-size:14px}
+@media(max-width:900px){main{padding:12px 10px 20px;grid-template-columns:minmax(0,1fr) 200px;column-gap:10px}main>.stage{gap:8px}.panel h2{font-size:13px}main>.ctl{padding:12px}h1{font-size:22px}p.lead{font-size:14px;margin-bottom:10px}}
+@media(max-width:599px){main{grid-template-columns:1fr}main>.stage{grid-template-columns:1fr}main>.ctl{grid-column:1;grid-row:6;margin-top:12px}canvas{max-width:100%}.panel h2{min-height:0}.ctl .btns{grid-template-columns:1fr 1fr}}
+</style>
 </head>
 <body>
 <main>
   <h1 id="h1">지구는 서→동으로 돌고, 해는 동→서로 가요</h1>
-  <p class="lead" id="lead">지구가 한 바퀴 돌면 하루예요. 왼쪽은 우주에서 본 모습, 오른쪽은 지구 위 “나”가 본 하늘이에요. 아래 패널로 속도를 천천히 바꿔 보세요.</p>
+  <p class="lead" id="lead">지구가 한 바퀴 돌면 하루예요. 왼쪽은 우주에서 본 모습, 오른쪽은 지구 위 “나”가 본 하늘이에요. 조작 패널로 속도와 시간을 바꿔 보세요.</p>
 
   <div class="tabs" role="group" aria-label="실험 선택">
     <button id="tab1" class="tab on" aria-pressed="true">실험 1 · 해는 왜 동→서로 갈까?</button>
@@ -435,7 +456,7 @@
     if(m===1){
       document.getElementById('skyTitle').textContent='지구 위 “나”가 본 하늘 (남쪽을 바라봄)';
       document.getElementById('h1').textContent='지구는 서→동으로 돌고, 해는 동→서로 가요';
-      document.getElementById('lead').textContent='지구가 한 바퀴 돌면 하루예요. 왼쪽은 우주에서 본 모습, 오른쪽은 지구 위 “나”가 본 하늘이에요. 아래 패널로 속도를 천천히 바꿔 보세요.';
+      document.getElementById('lead').textContent='지구가 한 바퀴 돌면 하루예요. 왼쪽은 우주에서 본 모습, 오른쪽은 지구 위 “나”가 본 하늘이에요. 조작 패널로 속도와 시간을 바꿔 보세요.';
     } else {
       document.getElementById('h1').textContent='어느 쪽 하늘을 보느냐에 따라 달라 보여요';
       document.getElementById('lead').textContent='위쪽 버튼으로 바라보는 방향을 바꿔 보세요. 왼쪽 그림의 흰 부채꼴이 내가 보는 쪽이에요. (한국처럼 북반구 위도 37.5° 기준)';
